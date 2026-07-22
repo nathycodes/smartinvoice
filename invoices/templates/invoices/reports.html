@@ -1,0 +1,65 @@
+{% extends "invoices/base.html" %}
+{% block title %}Reports{% endblock %}
+{% block page_title %}Reports{% endblock %}
+{% block page_sub %}Business performance overview{% endblock %}
+
+{% block content %}
+<div class="stat-grid">
+  <div class="stat-card">
+    <div class="stat-label">Total Revenue</div>
+    <div class="stat-value">&#8358;{{ total_revenue|floatformat:0 }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Collected</div>
+    <div class="stat-value">&#8358;{{ total_collected|floatformat:0 }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Outstanding</div>
+    <div class="stat-value warn">&#8358;{{ total_outstanding|floatformat:0 }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Parse Success Rate</div>
+    <div class="stat-value">{% if total_commands %}{{ success_count|floatformat:0 }}/{{ total_commands }}{% else %}&mdash;{% endif %}</div>
+  </div>
+</div>
+
+<div style="display:grid; grid-template-columns: 1fr 1fr; gap:18px;">
+  <div class="card">
+    <h3>Invoices by Status</h3>
+    {% for code, count in by_status.items %}
+    <div class="flex-between" style="padding:7px 0; border-bottom:1px solid var(--line);">
+      <span class="badge badge-{{ code|lower }}">{{ code|title }}</span>
+      <span class="mono">{{ count }}</span>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="card">
+    <h3>Top Customers</h3>
+    {% for c in top_customers %}
+    <div class="flex-between" style="padding:7px 0; border-bottom:1px solid var(--line);">
+      <span>{{ c.name }}</span>
+      <span class="mono">{{ c.num_invoices }} invoice{{ c.num_invoices|pluralize }}</span>
+    </div>
+    {% empty %}
+    <p class="text-soft text-sm">No customer data yet.</p>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="card mt-16">
+  <div class="flex-between mb-16">
+    <h3>Voice vs Text Input</h3>
+  </div>
+  <div class="flex gap-12">
+    <div class="stat-card" style="flex:1;">
+      <div class="stat-label">&#127908; Voice Commands</div>
+      <div class="stat-value">{{ voice_count }}</div>
+    </div>
+    <div class="stat-card" style="flex:1;">
+      <div class="stat-label">&#8997; Text Commands</div>
+      <div class="stat-value">{{ text_count }}</div>
+    </div>
+  </div>
+</div>
+{% endblock %}

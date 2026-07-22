@@ -1,0 +1,63 @@
+{% extends "invoices/base.html" %}
+{% load static %}
+{% block title %}Speak or Type an Invoice{% endblock %}
+{% block page_title %}Speak / Type Invoice{% endblock %}
+{% block page_sub %}Describe the sale in plain English — we'll build the invoice{% endblock %}
+{% block topbar_action %}
+<a href="{% url 'create_invoice_manual' %}" class="btn btn-ghost">Use form instead</a>
+{% endblock %}
+
+{% block content %}
+<div class="command-panel">
+  <div class="command-eyebrow">Voice or Text Command</div>
+  <div class="command-title">Tell us what you sold</div>
+
+  <form method="post" id="command-form">
+    {% csrf_token %}
+    <input type="hidden" name="input_type" id="input_type" value="TEXT">
+    <div class="command-input-row">
+      <textarea name="command_text" id="command_text" placeholder="e.g. Create invoice for John Doe, 2 bags of rice at 15000 naira each, due in 7 days">{{ form.command_text.value|default:"" }}</textarea>
+      <button type="button" class="mic-button" id="mic-button" title="Speak your command">&#127908;</button>
+    </div>
+    <div id="voice-status" class="command-hint">Click the microphone and speak, or type your command above.</div>
+
+    <div class="command-examples">
+      <span class="example-chip" data-example="Create invoice for John Doe, 2 bags of rice at 15000 naira each">2 bags of rice @ ₦15,000</span>
+      <span class="example-chip" data-example="Bill Amaka Stores for 5 cartons of indomie at 3500 each, due in 7 days">5 cartons of indomie, due in 7 days</span>
+      <span class="example-chip" data-example="Invoice Chidi for 3 plates of jollof rice at 2000 naira each and 1 bottle of coke at 500 naira">multi-item order</span>
+      <span class="example-chip" data-example="New invoice for Grace Ventures, 10 pieces of soap at 800 naira each, 20% discount">with 20% discount</span>
+    </div>
+
+    <button type="submit" class="btn btn-primary mt-16">Generate Invoice</button>
+  </form>
+
+  {% if parsed_preview %}
+  <div class="receipt">
+    <div class="receipt-header">
+      <strong>Could not generate invoice</strong>
+    </div>
+    {% for err in parsed_dict.errors %}
+    <div class="receipt-line" style="color: var(--red-flag);">&bull; {{ err }}</div>
+    {% endfor %}
+    <p class="text-sm" style="font-family: var(--font-body); margin-top:8px;">
+      Detected customer: <strong>{{ parsed_dict.customer_name|default:"none" }}</strong><br>
+      Detected items: {{ parsed_dict.items|length }}
+    </p>
+  </div>
+  {% endif %}
+</div>
+
+<div class="card mt-16">
+  <h3>Tips for a clean parse</h3>
+  <ul style="margin:0; padding-left:18px; font-size:0.88rem; color: var(--ink-soft); line-height:1.8;">
+    <li>Start with <span class="mono">"Create invoice for [Customer Name]"</span> or <span class="mono">"Bill [Customer Name] for..."</span></li>
+    <li>List each item as <span class="mono">[quantity] [unit] of [item] at [price] naira each</span></li>
+    <li>Join multiple items with <span class="mono">"and"</span></li>
+    <li>Add <span class="mono">"due in [N] days"</span> or <span class="mono">"[N]% discount"</span> anywhere in the sentence</li>
+  </ul>
+</div>
+{% endblock %}
+
+{% block extra_head %}
+<script src="{% static 'invoices/js/voice.js' %}"></script>
+{% endblock %}

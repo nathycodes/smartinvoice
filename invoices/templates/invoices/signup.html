@@ -1,0 +1,27 @@
+{% extends "invoices/base.html" %}
+{% block title %}Create your business account{% endblock %}
+{% block auth_content %}
+<div class="auth-shell">
+  <div class="auth-card" style="max-width:440px;">
+    <div class="auth-brand">
+      <div class="brand-mark" style="margin:0 auto 10px;">₦</div>
+      <h1>Set up your business</h1>
+      <p>Takes less than a minute &mdash; no card required.</p>
+    </div>
+
+    <form method="post">
+      {% csrf_token %}
+      {% for field in form %}
+      <div class="field">
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% if field.errors %}<div class="error-text">{{ field.errors|striptags }}</div>{% endif %}
+      </div>
+      {% endfor %}
+      <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">Create account</button>
+    </form>
+
+    <div class="auth-switch">Already have an account? <a href="{% url 'login' %}">Log in</a></div>
+  </div>
+</div>
+{% endblock %}

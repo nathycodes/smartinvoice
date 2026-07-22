@@ -1,0 +1,52 @@
+{% extends "invoices/base.html" %}
+{% block title %}Invoices{% endblock %}
+{% block page_title %}Invoices{% endblock %}
+{% block page_sub %}{{ invoices.count }} total{% endblock %}
+{% block topbar_action %}
+<a href="{% url 'create_invoice_smart' %}" class="btn btn-primary">+ New Invoice</a>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+  <form method="get" class="flex gap-12 mb-16" style="align-items:flex-end;">
+    <div class="field" style="flex:1; margin-bottom:0;">
+      <label>Search</label>
+      <input type="text" name="q" value="{{ query }}" placeholder="Invoice number or customer name">
+    </div>
+    <div class="field" style="margin-bottom:0;">
+      <label>Status</label>
+      <select name="status">
+        <option value="">All</option>
+        {% for code, label in status_choices %}
+        <option value="{{ code }}" {% if status == code %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <button type="submit" class="btn btn-outline">Filter</button>
+  </form>
+
+  {% if invoices %}
+  <table>
+    <thead><tr><th>Invoice #</th><th>Customer</th><th>Issue Date</th><th>Source</th><th>Status</th><th>Total</th><th>Balance</th></tr></thead>
+    <tbody>
+      {% for inv in invoices %}
+      <tr onclick="window.location='{% url 'invoice_detail' inv.pk %}'" style="cursor:pointer;">
+        <td class="mono">{{ inv.invoice_number }}</td>
+        <td>{{ inv.customer.name }}</td>
+        <td>{{ inv.issue_date }}</td>
+        <td><span class="source-tag">{{ inv.get_source_display }}</span></td>
+        <td><span class="badge badge-{{ inv.status|lower }}">{{ inv.get_status_display }}</span></td>
+        <td class="mono">&#8358;{{ inv.total_amount|floatformat:0 }}</td>
+        <td class="mono">&#8358;{{ inv.balance_due|floatformat:0 }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty-state">
+    <div class="icon">&#128196;</div>
+    <p>No invoices match your filters.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

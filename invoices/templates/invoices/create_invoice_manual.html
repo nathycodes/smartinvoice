@@ -1,0 +1,73 @@
+{% extends "invoices/base.html" %}
+{% block title %}New Invoice (Manual){% endblock %}
+{% block page_title %}New Invoice{% endblock %}
+{% block page_sub %}Manual entry form{% endblock %}
+{% block topbar_action %}
+<a href="{% url 'create_invoice_smart' %}" class="btn btn-ghost">Use voice/text instead</a>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+  <form method="post" id="manual-form">
+    {% csrf_token %}
+    <div class="form-row">
+      <div class="field">
+        <label for="customer">Customer</label>
+        <select name="customer" id="customer" required>
+          <option value="">Select a customer</option>
+          {% for c in customers %}
+          <option value="{{ c.pk }}">{{ c.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label for="due_date">Due Date (optional)</label>
+        <input type="date" name="due_date" id="due_date">
+      </div>
+    </div>
+
+    <label>Items</label>
+    <div id="items-wrap">
+      <div class="form-row item-row">
+        <div class="field" style="flex:2;">
+          <input type="text" name="item_description" placeholder="Item description" required>
+        </div>
+        <div class="field">
+          <input type="number" name="item_quantity" placeholder="Qty" step="0.01" required>
+        </div>
+        <div class="field">
+          <input type="number" name="item_price" placeholder="Unit price (₦)" step="0.01" required>
+        </div>
+      </div>
+    </div>
+    <button type="button" class="btn btn-ghost btn-sm" id="add-item">+ Add another item</button>
+
+    <div class="mt-16">
+      <button type="submit" class="btn btn-primary">Create Invoice</button>
+    </div>
+  </form>
+</div>
+
+{% if products %}
+<div class="card mt-16">
+  <h3>Saved products (for reference)</h3>
+  <table>
+    <thead><tr><th>Name</th><th>Unit</th><th>Price</th></tr></thead>
+    <tbody>
+      {% for p in products %}
+      <tr><td>{{ p.name }}</td><td>{{ p.unit }}</td><td class="mono">&#8358;{{ p.unit_price }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+<script>
+document.getElementById('add-item').addEventListener('click', function () {
+  const wrap = document.getElementById('items-wrap');
+  const row = wrap.querySelector('.item-row').cloneNode(true);
+  row.querySelectorAll('input').forEach(i => i.value = '');
+  wrap.appendChild(row);
+});
+</script>
+{% endblock %}

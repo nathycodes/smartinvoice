@@ -1,0 +1,42 @@
+{% extends "invoices/base.html" %}
+{% block title %}Command Logs{% endblock %}
+{% block page_title %}Command Logs{% endblock %}
+{% block page_sub %}Audit trail of every voice/text parsing attempt{% endblock %}
+
+{% block content %}
+<div class="card">
+  {% if logs %}
+  <table>
+    <thead><tr><th>Date</th><th>Type</th><th>Command</th><th>Parsed</th><th>Invoice</th></tr></thead>
+    <tbody>
+      {% for log in logs %}
+      <tr>
+        <td class="text-sm">{{ log.created_at|date:"M d, Y H:i" }}</td>
+        <td><span class="source-tag">{{ log.get_input_type_display }}</span></td>
+        <td class="text-sm">&ldquo;{{ log.raw_text|truncatechars:70 }}&rdquo;</td>
+        <td>
+          {% if log.parsed_successfully %}
+          <span class="badge badge-paid">Success</span>
+          {% else %}
+          <span class="badge badge-overdue">Failed</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if log.resulting_invoice %}
+          <a href="{% url 'invoice_detail' log.resulting_invoice.pk %}" class="mono">{{ log.resulting_invoice.invoice_number }}</a>
+          {% else %}
+          <span class="text-soft">&mdash;</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty-state">
+    <div class="icon">&#128220;</div>
+    <p>No commands logged yet. Try creating an invoice by voice or text.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

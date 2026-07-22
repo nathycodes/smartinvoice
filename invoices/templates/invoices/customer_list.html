@@ -1,0 +1,45 @@
+{% extends "invoices/base.html" %}
+{% block title %}Customers{% endblock %}
+{% block page_title %}Customers{% endblock %}
+{% block page_sub %}{{ customers.count }} total{% endblock %}
+
+{% block content %}
+<div style="display:grid; grid-template-columns: 1fr 320px; gap:18px; align-items:start;">
+  <div class="card">
+    {% if customers %}
+    <table>
+      <thead><tr><th>Name</th><th>Phone</th><th>Email</th><th>Invoices</th></tr></thead>
+      <tbody>
+        {% for c in customers %}
+        <tr>
+          <td>{{ c.name }}</td>
+          <td>{{ c.phone_number|default:"&mdash;" }}</td>
+          <td>{{ c.email|default:"&mdash;" }}</td>
+          <td class="mono">{{ c.invoice_count }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+      <div class="icon">&#128100;</div>
+      <p>No customers yet. New customers are added automatically when you speak or type an invoice command &mdash; or add one manually here.</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <h3>Add Customer</h3>
+    <form method="post">
+      {% csrf_token %}
+      {% for field in form %}
+      <div class="field">
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+      </div>
+      {% endfor %}
+      <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">Save Customer</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

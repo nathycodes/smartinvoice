@@ -1,0 +1,30 @@
+{% extends "invoices/base.html" %}
+{% block title %}Log in{% endblock %}
+{% block auth_content %}
+<div class="auth-shell">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <div class="brand-mark" style="margin:0 auto 10px;">₦</div>
+      <h1>SmartInvoice NG</h1>
+      <p>Speak it. Type it. Invoice it.</p>
+    </div>
+
+    {% if error %}<div class="error-text">{{ error }}</div>{% endif %}
+
+    <form method="post">
+      {% csrf_token %}
+      <div class="field">
+        <label for="username">Username</label>
+        <input type="text" name="username" id="username" required autofocus>
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input type="password" name="password" id="password" required>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">Log in</button>
+    </form>
+
+    <div class="auth-switch">No account yet? <a href="{% url 'signup' %}">Create one for your business</a></div>
+  </div>
+</div>
+{% endblock %}

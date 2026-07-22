@@ -1,0 +1,45 @@
+{% extends "invoices/base.html" %}
+{% block title %}Products{% endblock %}
+{% block page_title %}Products &amp; Services{% endblock %}
+{% block page_sub %}{{ products.count }} total{% endblock %}
+
+{% block content %}
+<div style="display:grid; grid-template-columns: 1fr 320px; gap:18px; align-items:start;">
+  <div class="card">
+    {% if products %}
+    <table>
+      <thead><tr><th>Name</th><th>Unit</th><th>Unit Price</th><th>Status</th></tr></thead>
+      <tbody>
+        {% for p in products %}
+        <tr>
+          <td>{{ p.name }}</td>
+          <td>{{ p.unit }}</td>
+          <td class="mono">&#8358;{{ p.unit_price|floatformat:0 }}</td>
+          <td>{% if p.is_active %}<span class="badge badge-paid">Active</span>{% else %}<span class="badge badge-cancelled">Inactive</span>{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+      <div class="icon">&#128230;</div>
+      <p>No products yet. Add the items you usually sell so they're recognised faster in voice/text commands.</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <h3>Add Product</h3>
+    <form method="post">
+      {% csrf_token %}
+      {% for field in form %}
+      <div class="field">
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+      </div>
+      {% endfor %}
+      <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">Save Product</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

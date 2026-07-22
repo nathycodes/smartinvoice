@@ -1,0 +1,80 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Smart Invoice{% endblock %} | SmartInvoice NG</title>
+  <link rel="stylesheet" href="{% static 'invoices/css/style.css' %}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+  {% if user.is_authenticated %}
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">₦</div>
+        <div>
+          <div class="brand-name">SmartInvoice</div>
+          <div class="brand-sub">NG &middot; SME Edition</div>
+        </div>
+      </div>
+
+      <div class="nav-section-label">Workspace</div>
+      <a href="{% url 'dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+        <span class="nav-icon">&#9632;</span> Dashboard
+      </a>
+      <a href="{% url 'create_invoice_smart' %}" class="nav-link {% if request.resolver_match.url_name == 'create_invoice_smart' %}active{% endif %}">
+        <span class="nav-icon">&#127908;</span> Speak / Type Invoice
+      </a>
+      <a href="{% url 'invoice_list' %}" class="nav-link {% if request.resolver_match.url_name == 'invoice_list' or request.resolver_match.url_name == 'invoice_detail' %}active{% endif %}">
+        <span class="nav-icon">&#128196;</span> Invoices
+      </a>
+
+      <div class="nav-section-label">Records</div>
+      <a href="{% url 'customer_list' %}" class="nav-link {% if request.resolver_match.url_name == 'customer_list' %}active{% endif %}">
+        <span class="nav-icon">&#128100;</span> Customers
+      </a>
+      <a href="{% url 'product_list' %}" class="nav-link {% if request.resolver_match.url_name == 'product_list' %}active{% endif %}">
+        <span class="nav-icon">&#128230;</span> Products
+      </a>
+
+      <div class="nav-section-label">Insights</div>
+      <a href="{% url 'reports' %}" class="nav-link {% if request.resolver_match.url_name == 'reports' %}active{% endif %}">
+        <span class="nav-icon">&#128202;</span> Reports
+      </a>
+      <a href="{% url 'command_log_list' %}" class="nav-link {% if request.resolver_match.url_name == 'command_log_list' %}active{% endif %}">
+        <span class="nav-icon">&#128220;</span> Command Logs
+      </a>
+
+      <div class="sidebar-footer">
+        Signed in as <strong style="color:#fff">{{ request.user.username }}</strong><br>
+        <a href="{% url 'logout' %}" style="color:#E7B89A;">Log out</a>
+      </div>
+    </aside>
+
+    <div class="main-area">
+      <div class="topbar">
+        <div>
+          <div class="topbar-title">{% block page_title %}Dashboard{% endblock %}</div>
+          <div class="topbar-sub">{% block page_sub %}{% endblock %}</div>
+        </div>
+        <div>{% block topbar_action %}{% endblock %}</div>
+      </div>
+      <div class="content">
+        {% if messages %}
+        <div class="messages">
+          {% for message in messages %}
+          <div class="alert {% if message.tags == 'error' %}alert-error{% else %}alert-success{% endif %}">{{ message }}</div>
+          {% endfor %}
+        </div>
+        {% endif %}
+        {% block content %}{% endblock %}
+      </div>
+    </div>
+  </div>
+  {% else %}
+    {% block auth_content %}{% endblock %}
+  {% endif %}
+</body>
+</html>

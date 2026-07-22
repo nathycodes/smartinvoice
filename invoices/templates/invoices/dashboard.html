@@ -1,0 +1,86 @@
+{% extends "invoices/base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block page_sub %}{{ business.business_name }}{% endblock %}
+{% block topbar_action %}
+<a href="{% url 'create_invoice_smart' %}" class="btn btn-primary">+ New Invoice</a>
+{% endblock %}
+
+{% block content %}
+<div class="stat-grid">
+  <div class="stat-card">
+    <div class="stat-label">Total Invoices</div>
+    <div class="stat-value">{{ total_invoices }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Customers</div>
+    <div class="stat-value">{{ total_customers }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Total Revenue</div>
+    <div class="stat-value">&#8358;{{ total_revenue|floatformat:0 }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Outstanding</div>
+    <div class="stat-value warn">&#8358;{{ total_outstanding|floatformat:0 }}</div>
+  </div>
+</div>
+
+<div style="display:grid; grid-template-columns: 1.4fr 1fr; gap:18px; align-items:start;">
+  <div class="card">
+    <div class="flex-between mb-16">
+      <h3>Recent Invoices</h3>
+      <a href="{% url 'invoice_list' %}" class="btn btn-ghost btn-sm">View all</a>
+    </div>
+    {% if recent_invoices %}
+    <table>
+      <thead><tr><th>Invoice</th><th>Customer</th><th>Source</th><th>Status</th><th>Amount</th></tr></thead>
+      <tbody>
+        {% for inv in recent_invoices %}
+        <tr onclick="window.location='{% url 'invoice_detail' inv.pk %}'" style="cursor:pointer;">
+          <td class="mono">{{ inv.invoice_number }}</td>
+          <td>{{ inv.customer.name }}</td>
+          <td><span class="source-tag">{{ inv.get_source_display }}</span></td>
+          <td>
+            <span class="badge badge-{{ inv.status|lower }}">{{ inv.get_status_display }}</span>
+          </td>
+          <td class="mono">&#8358;{{ inv.total_amount|floatformat:0 }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+      <div class="icon">&#128196;</div>
+      <p>No invoices yet. Create your first one by speaking or typing a command.</p>
+      <a href="{% url 'create_invoice_smart' %}" class="btn btn-primary">+ New Invoice</a>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <h3>Invoice Status</h3>
+    <div class="mt-16">
+      {% for code, count in status_counts.items %}
+      <div class="flex-between" style="padding:7px 0; border-bottom:1px solid var(--line);">
+        <span class="badge badge-{{ code|lower }}">{{ code|title }}</span>
+        <span class="mono">{{ count }}</span>
+      </div>
+      {% endfor %}
+    </div>
+
+    <h3 class="mt-16">Recent Commands</h3>
+    {% if recent_commands %}
+      {% for log in recent_commands %}
+      <div class="text-sm" style="padding:7px 0; border-bottom:1px solid var(--line);">
+        <span class="source-tag">{{ log.get_input_type_display }}</span>
+        {% if log.parsed_successfully %}<span style="color:#1F6B3B;">&#10003;</span>{% else %}<span style="color:#B23A2E;">&#10007;</span>{% endif %}
+        <div class="text-soft" style="margin-top:3px;">&ldquo;{{ log.raw_text|truncatechars:60 }}&rdquo;</div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <p class="text-soft text-sm">No commands logged yet.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
