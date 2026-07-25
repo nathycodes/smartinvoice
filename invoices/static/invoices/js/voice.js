@@ -6,120 +6,197 @@
 
   if (!micButton || !textArea) return;
 
-  // Check if we are on a secure connection
-  if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+  // HTTPS check
+  if (location.protocol !== "https:" && location.hostname !== "localhost") {
     micButton.style.opacity = "0.4";
     micButton.title = "Voice input requires HTTPS";
+
     if (statusEl) {
-      statusEl.textContent = "Voice input only works on a secure (https://) connection. You can still type your command.";
+      statusEl.textContent =
+        "Voice input only works on a secure (https://) connection. You can still type your command.";
       statusEl.style.color = "#D9622B";
     }
+
     micButton.addEventListener("click", function () {
-      alert("Voice input only works on a secure HTTPS connection.\n\nPlease access the site via your Render link (https://...) and use Chrome or Edge browser.");
+      alert(
+        "Voice input only works on a secure HTTPS connection.\n\nPlease access the site via your Render URL using Google Chrome or Microsoft Edge."
+      );
     });
+
     return;
   }
 
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const SpeechRecognition =
+    window.SpeechRecognition || window.webkitSpeechRecognition;
 
   if (!SpeechRecognition) {
     micButton.style.opacity = "0.4";
-    micButton.title = "Not supported in this browser";
+    micButton.title = "Browser not supported";
+
     if (statusEl) {
-      statusEl.textContent = "Voice input is not supported in this browser. Please use Google Chrome or Microsoft Edge.";
+      statusEl.textContent =
+        "Voice input is not supported in this browser. Please use Google Chrome or Microsoft Edge.";
       statusEl.style.color = "#D9622B";
     }
+
     micButton.addEventListener("click", function () {
-      alert("Voice input is not supported in this browser.\n\nPlease open this site in Google Chrome or Microsoft Edge.");
+      alert(
+        "Voice input is not supported in this browser.\n\nPlease use Google Chrome or Microsoft Edge."
+      );
     });
+
     return;
   }
 
   const recognition = new SpeechRecognition();
+
   console.log("Speech Recognition initialized.");
+
   recognition.lang = "en-US";
   recognition.interimResults = true;
   recognition.continuous = false;
+  recognition.maxAlternatives = 1;
 
   let listening = false;
 
   micButton.addEventListener("click", function () {
     console.log("Microphone button clicked.");
+
     if (listening) {
       recognition.stop();
       return;
     }
-    // Ask for microphone permission explicitly
-    navigator.mediaDevices.getUserMedia({ audio: true })
+
+    navigator.mediaDevices
+      .getUserMedia({ audio: true })
       .then(function () {
+        console.log("Microphone permission granted.");
+
         try {
           recognition.start();
         } catch (e) {
-          if (statusEl) statusEl.textContent = "Error starting microphone: " + e.message;
+          console.error(e);
+
+          if (statusEl) {
+            statusEl.textContent =
+              "Error starting microphone: " + e.message;
+            statusEl.style.color = "#D9622B";
+          }
         }
       })
       .catch(function (err) {
+        console.error(err);
+
         if (statusEl) {
-          statusEl.textContent = "Microphone access denied. Click the lock icon in your browser address bar and set Microphone to Allow, then refresh.";
+          statusEl.textContent =
+            "Microphone access denied. Please allow microphone permission and refresh the page.";
           statusEl.style.color = "#D9622B";
         }
       });
   });
 
   recognition.addEventListener("start", function () {
+    console.log("Speech recognition started.");
+
     listening = true;
     micButton.classList.add("listening");
+
     if (statusEl) {
-      statusEl.textContent = "Listening... speak your invoice command now.";
-      statusEl.style.color = "#9FC2AE";
+      statusEl.textContent =
+        "Listening... Speak your invoice command now.";
+      statusEl.style.color = "#2E8B57";
     }
-    if (inputTypeField) inputTypeField.value = "VOICE";
+
+    if (inputTypeField) {
+      inputTypeField.value = "VOICE";
+    }
   });
 
   recognition.addEventListener("result", function (event) {
-    let finalTranscript = "";
-    let interimTranscript = "";
-    for (let i = 0; i < event.results.length; i++) {
-      const transcript = event.results[i][0].transcript;
-      if (event.results[i].isFinal) {
-        finalTranscript += transcript;
-      } else {
-        interimTranscript += transcript;
-      }
+    let transcript = "";
+
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      transcript += event.results[i][0].transcript;
     }
-    textArea.value = (finalTranscript || interimTranscript).trim();
+
+    textArea.value = transcript.trim();
+
+    console.log("Transcript:", transcript);
   });
 
   recognition.addEventListener("end", function () {
+    console.log("Speech recognition ended.");
+
     listening = false;
     micButton.classList.remove("listening");
-    if (statusEl && textArea.value.trim()) {
-      statusEl.textContent = "Captured! Review the text below, then click Generate Invoice.";
-      statusEl.style.color = "#9FC2AE";
-    } else if (statusEl) {
-      statusEl.textContent = "Didn't catch that — try again or type your command instead.";
+
+    if (!statusEl) return;
+
+    if (textArea.value.trim()) {
+      statusEl.textContent =
+        "Captured! Review the text and click Generate Invoice.";
+      statusEl.style.color = "#2E8B57";
+    } else {
+      statusEl.textContent =
+        "No speech detected. Try again or type your command.";
       statusEl.style.color = "#D9622B";
     }
   });
 
+  recognition.addEventListener("error", function (event) {
+    console.error("SpeechRecognition Error:", event.error);
 
-      msg = "Microphone blocked. Click the lock icon in your address bar, set Microphone to Allow, then refresh the page.";
-    } else if (event.error === "no-speech") {
-      msg = "No speech detected. Try speaking louder or closer to the microphone.";
-    } else if (event.error === "network") {
-      msg = "Network error during voice recognition. Check your internet connection.";
+    listening = false;
+    micButton.classList.remove("listening");
+
+    let msg = "Microphone error: " + event.error;
+
+    switch (event.error) {
+      case "not-allowed":
+        msg =
+          "Microphone permission denied. Please allow microphone access and refresh the page.";
+        break;
+
+      case "no-speech":
+        msg =
+          "No speech detected. Please speak clearly and try again.";
+        break;
+
+      case "audio-capture":
+        msg =
+          "No microphone detected. Please connect or enable a microphone.";
+        break;
+
+      case "network":
+        msg =
+          "Network error occurred during speech recognition.";
+        break;
+
+      case "aborted":
+        msg =
+          "Speech recognition was cancelled.";
+        break;
+
+      case "language-not-supported":
+        msg =
+          "Selected language is not supported.";
+        break;
     }
+
     if (statusEl) {
       statusEl.textContent = msg;
       statusEl.style.color = "#D9622B";
     }
   });
 
-  // Example chips fill the textarea on click
   document.querySelectorAll(".example-chip").forEach(function (chip) {
     chip.addEventListener("click", function () {
       textArea.value = chip.dataset.example;
-      if (inputTypeField) inputTypeField.value = "TEXT";
+
+      if (inputTypeField) {
+        inputTypeField.value = "TEXT";
+      }
+
       textArea.focus();
     });
   });
