@@ -36,6 +36,7 @@
   }
 
   const recognition = new SpeechRecognition();
+  console.log("Speech Recognition initialized.");
   recognition.lang = "en-US";
   recognition.interimResults = true;
   recognition.continuous = false;
@@ -43,6 +44,7 @@
   let listening = false;
 
   micButton.addEventListener("click", function () {
+    console.log("Microphone button clicked.");
     if (listening) {
       recognition.stop();
       return;
@@ -100,22 +102,7 @@
     }
   });
 
-  recognition.addEventListener("error", function (event) {
-    listening = false;
-    micButton.classList.remove("listening");
-    let msg = "Microphone error: " + event.error;
-    if (event.error === "not-allowed") {recognition.addEventListener("error", function (event) {
 
-    console.log("SpeechRecognition Error:", event.error);
-    console.log(event);
-
-    listening = false;
-    micButton.classList.remove("listening");
-
-    let msg = "Microphone error: " + event.error;
-
-    ...
-});
       msg = "Microphone blocked. Click the lock icon in your address bar, set Microphone to Allow, then refresh the page.";
     } else if (event.error === "no-speech") {
       msg = "No speech detected. Try speaking louder or closer to the microphone.";
