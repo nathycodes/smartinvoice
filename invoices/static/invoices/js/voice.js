@@ -64,6 +64,41 @@
   recognition.maxAlternatives = 1;
 
   let listening = false;
+  let audioContext = null;
+
+  function playTone(frequency, durationMs, type) {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+
+      if (!audioContext) {
+        audioContext = new AudioCtx();
+      }
+
+      if (audioContext.state === "suspended") {
+        audioContext.resume();
+      }
+
+      const now = audioContext.currentTime;
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+
+      oscillator.type = type || "sine";
+      oscillator.frequency.setValueAtTime(frequency, now);
+
+      gainNode.gain.setValueAtTime(0.0001, now);
+      gainNode.gain.exponentialRampToValueAtTime(0.05, now + 0.02);
+      gainNode.gain.exponentialRampToValueAtTime(0.0001, now + durationMs / 1000);
+
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+
+      oscillator.start(now);
+      oscillator.stop(now + durationMs / 1000 + 0.03);
+    } catch (error) {
+      console.warn("Audio cue unavailable:", error);
+    }
+  }
 
   function setListeningUI(isListening) {
     if (!micButton || !micIcon) return;
@@ -81,6 +116,14 @@
       micButton.setAttribute("aria-label", "Speak your command");
       micButton.classList.remove("is-recording");
     }
+  }
+
+  function startSoundCue() {
+    playTone(740, 120, "sine");
+  }
+
+  function stopSoundCue() {
+    playTone(440, 140, "sine");
   }
 
   micButton.addEventListener("click", function () {
@@ -126,6 +169,7 @@
     micButton.classList.add("listening");
     micButton.setAttribute("aria-pressed", "true");
     setListeningUI(true);
+    startSoundCue();
 
     if (statusEl) {
       statusEl.textContent =
@@ -157,6 +201,7 @@
     micButton.classList.remove("listening");
     micButton.setAttribute("aria-pressed", "false");
     setListeningUI(false);
+    stopSoundCue();
 
     if (!statusEl) return;
 
@@ -178,6 +223,7 @@
     micButton.classList.remove("listening");
     micButton.setAttribute("aria-pressed", "false");
     setListeningUI(false);
+    stopSoundCue();
 
     let msg = "Microphone error: " + event.error;
 
