@@ -3,6 +3,9 @@
 {% block title %}Speak or Type an Invoice{% endblock %}
 {% block page_title %}Speak / Type Invoice{% endblock %}
 {% block page_sub %}Describe the sale in plain English — we'll build the invoice{% endblock %}
+{% block extra_head %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+{% endblock %}
 {% block topbar_action %}
 <a href="{% url 'create_invoice_manual' %}" class="btn btn-ghost">Use form instead</a>
 {% endblock %}
@@ -17,7 +20,14 @@
     <input type="hidden" name="input_type" id="input_type" value="TEXT">
     <div class="command-input-row">
       <textarea name="command_text" id="command_text" placeholder="e.g. Create invoice for John Doe, 2 bags of rice at 15000 naira each, due in 7 days">{{ form.command_text.value|default:"" }}</textarea>
-      <button type="button" class="mic-button" id="mic-button" title="Speak your command">&#127908;</button>
+      <button type="button" class="mic-button" id="mic-button" title="Speak your command" aria-label="Speak your command" aria-pressed="false">
+        <i class="fa-solid fa-microphone" aria-hidden="true"></i>
+        <span class="mic-rings" aria-hidden="true">
+          <span></span>
+          <span></span>
+          <span></span>
+        </span>
+      </button>
     </div>
     <div id="voice-status" class="command-hint">Click the microphone and speak, or type your command above.</div>
 

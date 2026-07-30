@@ -1,13 +1,19 @@
 (function () {
   const micButton = document.getElementById("mic-button");
+  const micIcon = micButton ? micButton.querySelector("i") : null;
   const textArea = document.getElementById("command_text");
   const inputTypeField = document.getElementById("input_type");
   const statusEl = document.getElementById("voice-status");
 
   if (!micButton || !textArea) return;
 
-  // HTTPS check
-  if (location.protocol !== "https:" && location.hostname !== "localhost") {
+  const localHosts = new Set(["localhost", "127.0.0.1", "::1"]);
+  const isLocalDevHost =
+    localHosts.has(location.hostname) ||
+    /^127(?:\.\d{1,3}){3}$/.test(location.hostname);
+
+  // HTTPS check, but allow local development hosts.
+  if (location.protocol !== "https:" && !isLocalDevHost) {
     micButton.style.opacity = "0.4";
     micButton.title = "Voice input requires HTTPS";
 
@@ -59,6 +65,24 @@
 
   let listening = false;
 
+  function setListeningUI(isListening) {
+    if (!micButton || !micIcon) return;
+
+    if (isListening) {
+      micIcon.classList.remove("fa-microphone");
+      micIcon.classList.add("fa-circle-stop");
+      micButton.title = "Stop recording";
+      micButton.setAttribute("aria-label", "Stop recording");
+      micButton.classList.add("is-recording");
+    } else {
+      micIcon.classList.remove("fa-circle-stop");
+      micIcon.classList.add("fa-microphone");
+      micButton.title = "Speak your command";
+      micButton.setAttribute("aria-label", "Speak your command");
+      micButton.classList.remove("is-recording");
+    }
+  }
+
   micButton.addEventListener("click", function () {
     console.log("Microphone button clicked.");
 
@@ -100,6 +124,8 @@
 
     listening = true;
     micButton.classList.add("listening");
+    micButton.setAttribute("aria-pressed", "true");
+    setListeningUI(true);
 
     if (statusEl) {
       statusEl.textContent =
@@ -129,6 +155,8 @@
 
     listening = false;
     micButton.classList.remove("listening");
+    micButton.setAttribute("aria-pressed", "false");
+    setListeningUI(false);
 
     if (!statusEl) return;
 
@@ -148,6 +176,8 @@
 
     listening = false;
     micButton.classList.remove("listening");
+    micButton.setAttribute("aria-pressed", "false");
+    setListeningUI(false);
 
     let msg = "Microphone error: " + event.error;
 

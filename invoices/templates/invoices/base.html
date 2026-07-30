@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}Smart Invoice{% endblock %} | SmartInvoice NG</title>
   <link rel="stylesheet" href="{% static 'invoices/css/style.css' %}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
   {% block extra_head %}{% endblock %}
 </head>
 <body>
@@ -22,29 +23,29 @@
 
       <div class="nav-section-label">Workspace</div>
       <a href="{% url 'dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
-        <span class="nav-icon">&#9632;</span> Dashboard
+        <span class="nav-icon"><i class="fa-solid fa-gauge-high" aria-hidden="true"></i></span> Dashboard
       </a>
       <a href="{% url 'create_invoice_smart' %}" class="nav-link {% if request.resolver_match.url_name == 'create_invoice_smart' %}active{% endif %}">
-        <span class="nav-icon">&#127908;</span> Speak / Type Invoice
+        <span class="nav-icon"><i class="fa-solid fa-microphone" aria-hidden="true"></i></span> Speak / Type Invoice
       </a>
       <a href="{% url 'invoice_list' %}" class="nav-link {% if request.resolver_match.url_name == 'invoice_list' or request.resolver_match.url_name == 'invoice_detail' %}active{% endif %}">
-        <span class="nav-icon">&#128196;</span> Invoices
+        <span class="nav-icon"><i class="fa-solid fa-file-invoice" aria-hidden="true"></i></span> Invoices
       </a>
 
       <div class="nav-section-label">Records</div>
       <a href="{% url 'customer_list' %}" class="nav-link {% if request.resolver_match.url_name == 'customer_list' %}active{% endif %}">
-        <span class="nav-icon">&#128100;</span> Customers
+        <span class="nav-icon"><i class="fa-solid fa-users" aria-hidden="true"></i></span> Customers
       </a>
       <a href="{% url 'product_list' %}" class="nav-link {% if request.resolver_match.url_name == 'product_list' %}active{% endif %}">
-        <span class="nav-icon">&#128230;</span> Products
+        <span class="nav-icon"><i class="fa-solid fa-box" aria-hidden="true"></i></span> Products
       </a>
 
       <div class="nav-section-label">Insights</div>
       <a href="{% url 'reports' %}" class="nav-link {% if request.resolver_match.url_name == 'reports' %}active{% endif %}">
-        <span class="nav-icon">&#128202;</span> Reports
+        <span class="nav-icon"><i class="fa-solid fa-chart-line" aria-hidden="true"></i></span> Reports
       </a>
       <a href="{% url 'command_log_list' %}" class="nav-link {% if request.resolver_match.url_name == 'command_log_list' %}active{% endif %}">
-        <span class="nav-icon">&#128220;</span> Command Logs
+        <span class="nav-icon"><i class="fa-solid fa-scroll" aria-hidden="true"></i></span> Command Logs
       </a>
 
       <div class="sidebar-footer">

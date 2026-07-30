@@ -134,7 +134,7 @@ def create_invoice_smart(request):
                 business=business, name=parsed.customer_name
             )
             due_date = None
-            if parsed.due_in_days:
+            if parsed.due_in_days is not None:
                 due_date = timezone.now().date() + timedelta(days=parsed.due_in_days)
 
             invoice = Invoice.objects.create(
@@ -149,10 +149,10 @@ def create_invoice_smart(request):
 
             for item in parsed.items:
                 InvoiceItem.objects.create(
-                    invoice=invoice,
-                    description=item["description"],
-                    quantity=item["quantity"],
-                    unit_price=item["unit_price"],
+                invoice=invoice,
+                description=item.description,
+                quantity=item.quantity,
+                unit_price=item.unit_price,
                 )
 
             if parsed.discount_percent:
