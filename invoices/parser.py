@@ -1033,16 +1033,19 @@ def parse_item_segment(segment: str) -> Tuple[Optional[InvoiceItem], Optional[st
     # correctly when the user appends "discount" or "due in X days".
     remainder_text = re.split(r"\b(?:discount|due)\b", remainder_text, maxsplit=1, flags=re.IGNORECASE)[0].strip()
 
-    # Locate the best money candidate inside the tail.
-    money_text, money_value, start_idx, end_idx = find_best_money_candidate(remainder_text)
-    if money_value is None:
-        return None, f"Could not find a unit price in item segment: '{segment}'."
-
     tail_tokens = tokenize(remainder_text)
-    price_tokens = tokenize(money_text or "")
+    # Some invoice commands omit the unit price when the product already exists
+    # in the catalog. In that case we keep parsing the item and let the view
+    # layer resolve the price from the saved products table.
+    money_text, money_value, start_idx, end_idx = find_best_money_candidate(remainder_text)
 
-    # Rebuild description by removing the matched money window from the tail.
-    description_tokens = tail_tokens[:start_idx] + tail_tokens[end_idx:]
+    if money_value is None:
+        description_tokens = tail_tokens
+        money_value = Decimal("0")
+    else:
+        # Rebuild description by removing the matched money window from the tail.
+        description_tokens = tail_tokens[:start_idx] + tail_tokens[end_idx:]
+
     description = clean_fragment(" ".join(description_tokens))
 
     # Remove price-introducer words that may have stayed behind after slicing.
@@ -1110,8 +1113,6 @@ def validate_parsed_command(result: ParsedInvoiceCommand) -> List[str]:
             errors.append(f"Item {idx} has an invalid quantity.")
         if not item.description:
             errors.append(f"Item {idx} is missing a description.")
-        if item.unit_price <= 0:
-            errors.append(f"Item {idx} has an invalid unit price.")
         if not item.unit:
             errors.append(f"Item {idx} is missing a unit.")
 

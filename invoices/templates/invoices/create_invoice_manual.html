@@ -27,10 +27,17 @@
     </div>
 
     <label>Items</label>
+    {% if products %}
+    <datalist id="product-suggestions">
+      {% for p in products %}
+      <option value="{{ p.name }}"></option>
+      {% endfor %}
+    </datalist>
+    {% endif %}
     <div id="items-wrap">
       <div class="form-row item-row">
         <div class="field" style="flex:2;">
-          <input type="text" name="item_description" placeholder="Item description" required>
+          <input type="text" name="item_description" placeholder="Item description" list="{% if products %}product-suggestions{% endif %}" required>
         </div>
         <div class="field">
           <input type="number" name="item_quantity" placeholder="Qty" step="0.01" required>
@@ -63,11 +70,40 @@
 {% endif %}
 
 <script>
+const savedProductPrices = {
+  {% for p in products %}
+  "{{ p.name|lower|escapejs }}": "{{ p.unit_price }}",
+  {% endfor %}
+};
+
+function syncItemRow(row) {
+  if (!row) return;
+
+  const descInput = row.querySelector('input[name="item_description"]');
+  const priceInput = row.querySelector('input[name="item_price"]');
+  if (!descInput || !priceInput) return;
+
+  const key = descInput.value.trim().toLowerCase();
+  const price = savedProductPrices[key];
+
+  if (price && (!priceInput.value || priceInput.value === "0")) {
+    priceInput.value = price;
+  }
+}
+
+document.getElementById('items-wrap').addEventListener('input', function (event) {
+  if (event.target && event.target.name === 'item_description') {
+    syncItemRow(event.target.closest('.item-row'));
+  }
+});
+
 document.getElementById('add-item').addEventListener('click', function () {
   const wrap = document.getElementById('items-wrap');
   const row = wrap.querySelector('.item-row').cloneNode(true);
   row.querySelectorAll('input').forEach(i => i.value = '');
   wrap.appendChild(row);
 });
+
+document.querySelectorAll('.item-row').forEach(syncItemRow);
 </script>
 {% endblock %}

@@ -1,4 +1,5 @@
 from datetime import timedelta
+from decimal import Decimal, InvalidOperation
 
 from django.contrib import messages
 from django.contrib.auth import login, logout, authenticate
@@ -65,6 +66,41 @@ def _get_business(request):
     return get_object_or_404(Business, owner=request.user)
 
 
+def _normalize_lookup_text(text):
+    """Normalize product names for safe case-insensitive matching."""
+    return " ".join((text or "").split()).casefold()
+
+
+def _get_product_index(business):
+    """Build a simple in-memory product lookup keyed by normalized product name."""
+    return {
+        _normalize_lookup_text(product.name): product
+        for product in Product.objects.filter(business=business, is_active=True)
+    }
+
+
+def _apply_saved_product_prices(items, product_index):
+    """
+    Fill missing item prices from saved products.
+
+    Returns a list of descriptions that still could not be resolved.
+    """
+
+    unresolved = []
+
+    for item in items:
+        product = product_index.get(_normalize_lookup_text(item.description))
+        if product is not None:
+            if item.unit_price <= 0:
+                item.unit_price = product.unit_price
+            if not item.unit or item.unit == "unit":
+                item.unit = product.unit
+        elif item.unit_price <= 0:
+            unresolved.append(item.description)
+
+    return unresolved
+
+
 # ---------------------------------------------------------------------------
 # Dashboard
 # ---------------------------------------------------------------------------
@@ -117,6 +153,14 @@ def create_invoice_smart(request):
         raw_text = form.cleaned_data["command_text"]
         input_type = form.cleaned_data["input_type"]
         parsed = parse_command(raw_text)
+        product_index = _get_product_index(business)
+        unresolved = _apply_saved_product_prices(parsed.items, product_index)
+
+        if unresolved:
+            for description in unresolved:
+                parsed.errors.append(f"Saved product price not found for '{description}'.")
+            parsed.success = False
+
         parsed_dict = parsed.as_dict()
 
         log = CommandLog.objects.create(
@@ -148,11 +192,13 @@ def create_invoice_smart(request):
             )
 
             for item in parsed.items:
+                product = product_index.get(_normalize_lookup_text(item.description))
                 InvoiceItem.objects.create(
-                invoice=invoice,
-                description=item.description,
-                quantity=item.quantity,
-                unit_price=item.unit_price,
+                    invoice=invoice,
+                    product=product,
+                    description=item.description,
+                    quantity=item.quantity,
+                    unit_price=item.unit_price,
                 )
 
             if parsed.discount_percent:
@@ -180,29 +226,59 @@ def create_invoice_manual(request):
     business = _get_business(request)
     customers = Customer.objects.filter(business=business)
     products = Product.objects.filter(business=business, is_active=True)
+    product_index = _get_product_index(business)
 
     if request.method == "POST":
         customer_id = request.POST.get("customer")
         customer = get_object_or_404(Customer, pk=customer_id, business=business)
         due_date = request.POST.get("due_date") or None
 
-        invoice = Invoice.objects.create(
-            business=business,
-            customer=customer,
-            due_date=due_date,
-            source="MANUAL",
-            created_by=request.user,
-        )
-
         descriptions = request.POST.getlist("item_description")
         quantities = request.POST.getlist("item_quantity")
         prices = request.POST.getlist("item_price")
 
         for desc, qty, price in zip(descriptions, quantities, prices):
-            if desc and qty and price:
-                InvoiceItem.objects.create(
-                    invoice=invoice, description=desc, quantity=qty, unit_price=price
+            if not desc or not qty:
+                continue
+
+            product = product_index.get(_normalize_lookup_text(desc))
+            resolved_price = price
+
+            if (resolved_price is None or str(resolved_price).strip() == "" or str(resolved_price).strip() == "0") and product:
+                resolved_price = product.unit_price
+
+            try:
+                resolved_price_value = Decimal(str(resolved_price))
+            except (InvalidOperation, TypeError, ValueError):
+                resolved_price_value = Decimal("0")
+
+            if resolved_price_value <= 0:
+                continue
+
+            if "invoice" not in locals():
+                invoice = Invoice.objects.create(
+                    business=business,
+                    customer=customer,
+                    due_date=due_date,
+                    source="MANUAL",
+                    created_by=request.user,
                 )
+
+            InvoiceItem.objects.create(
+                invoice=invoice,
+                product=product,
+                description=desc,
+                quantity=qty,
+                unit_price=resolved_price_value,
+            )
+
+        if "invoice" not in locals():
+            messages.error(request, "Please add at least one item with a valid price or a saved product name.")
+            return render(
+                request,
+                "invoices/create_invoice_manual.html",
+                {"customers": customers, "products": products},
+            )
 
         messages.success(request, f"Invoice {invoice.invoice_number} created successfully.")
         return redirect("invoice_detail", pk=invoice.pk)
