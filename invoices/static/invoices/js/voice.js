@@ -60,10 +60,11 @@
 
   recognition.lang = "en-US";
   recognition.interimResults = true;
-  recognition.continuous = false;
+  recognition.continuous = true;
   recognition.maxAlternatives = 1;
 
   let listening = false;
+  let userRequestedStop = false;
   let audioContext = null;
 
   function playTone(frequency, durationMs, type) {
@@ -130,10 +131,12 @@
     console.log("Microphone button clicked.");
 
     if (listening) {
+      userRequestedStop = true;
       recognition.stop();
       return;
     }
 
+    userRequestedStop = false;
     navigator.mediaDevices
       .getUserMedia({ audio: true })
       .then(function () {
@@ -166,6 +169,7 @@
     console.log("Speech recognition started.");
 
     listening = true;
+    userRequestedStop = false;
     micButton.classList.add("listening");
     micButton.setAttribute("aria-pressed", "true");
     setListeningUI(true);
@@ -197,6 +201,18 @@
   recognition.addEventListener("end", function () {
     console.log("Speech recognition ended.");
 
+    if (!userRequestedStop && listening) {
+      // Keep the mic active until the user explicitly clicks stop.
+      setTimeout(function () {
+        try {
+          recognition.start();
+        } catch (error) {
+          console.warn("Unable to restart recognition:", error);
+        }
+      }, 150);
+      return;
+    }
+
     listening = false;
     micButton.classList.remove("listening");
     micButton.setAttribute("aria-pressed", "false");
@@ -220,6 +236,7 @@
     console.error("SpeechRecognition Error:", event.error);
 
     listening = false;
+    userRequestedStop = false;
     micButton.classList.remove("listening");
     micButton.setAttribute("aria-pressed", "false");
     setListeningUI(false);
